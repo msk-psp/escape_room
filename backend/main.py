@@ -40,6 +40,8 @@ app.add_middleware(
 )
 
 app.include_router(scraping.router)
+app.include_router(cafes.router, prefix="/cafes", tags=["cafes"])
+app.include_router(themes.router, prefix="/themes", tags=["themes"])
 
 @app.get("/")
 async def read_root():

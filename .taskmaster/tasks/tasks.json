@@ -61,59 +61,68 @@
       {
         "id": 12,
         "title": "Data Scraping Engine for Cafe and Theme Information",
-        "description": "Develop a data scraping system to periodically collect escape room cafe and theme information from sources like Naver/Kakao Maps and official cafe websites.",
-        "details": "Use Python with Scrapy or BeautifulSoup for static sites and Puppeteer (via a Node.js script or Python's `pyppeteer`) for dynamic, JavaScript-heavy sites. The scraper should extract cafe details (name, address, coordinates) and theme details (name, genre, difficulty, story). Implement a scheduler (e.g., cron job or a library like APScheduler) to run the scraping task weekly. Include error handling for website structure changes and IP blocks (e.g., using proxy rotation). The collected data should be cleaned, deduplicated, and stored in the PostgreSQL database.",
-        "testStrategy": "Run the scraper against target websites and verify that the data is correctly parsed and inserted into the database tables. Test the error handling by simulating network errors or pointing to an invalid URL. Validate the data cleaning and deduplication logic.",
-        "priority": "high",
+        "description": "Refine and automate the existing Selenium-based scraping script (`scraping.py`) to periodically collect escape room cafe and theme information from Naver Maps and official cafe websites.",
+        "status": "done",
         "dependencies": [
           11
         ],
-        "status": "pending",
+        "priority": "high",
+        "details": "The project will pivot from a Scrapy-based implementation to enhancing the existing Selenium script (`scraping.py`). The core tasks involve refining the `scrape_naver_map_cafes` function to extract cafe names, addresses, and website URLs. A new function will be developed to scrape theme details (name, genre, difficulty) from the collected official websites. A robust data pipeline will be implemented to clean, deduplicate, and store both cafe and theme data in the PostgreSQL database, ensuring themes are correctly linked to their parent cafes. The entire process will be automated to run weekly using `APScheduler` configured in a `scheduler.py` script.",
+        "testStrategy": "Test the refined cafe scraper by running it for a specific region and verifying the accuracy of the extracted addresses and URLs. Validate the data pipeline by feeding it sample data (including duplicates) and confirming correct insertion and deduplication in the PostgreSQL database. Test the new theme scraper against several different cafe websites to ensure it correctly parses theme details. Finally, test the scheduler by setting a short interval and confirming the end-to-end process executes automatically and successfully.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Setup Scrapy Project and Core Configuration",
-            "description": "Initialize a new Python Scrapy project to serve as the foundation for the scraping engine. This includes setting up the project structure and configuring essential settings for polite and effective scraping, such as user agents and download delays.",
+            "title": "Refine Naver Map Cafe Scraper",
+            "description": "Enhance the existing `scrape_naver_map_cafes` function in `scraping.py` to extract comprehensive cafe details, including address and official website URL.",
+            "status": "done",
             "dependencies": [],
-            "details": "Use the command `scrapy startproject scraper_engine` to create the project. In the `settings.py` file, configure a list of rotating `USER_AGENT` strings to mimic different browsers. Set `ROBOTSTXT_OBEY = False` as many modern sites have restrictive robots.txt files. Configure a `DOWNLOAD_DELAY` of 2-3 seconds to avoid overwhelming servers. Define the `Item` structures for `CafeItem` and `ThemeItem` in `items.py` to match the database schema.",
-            "status": "pending",
-            "testStrategy": "Run `scrapy check` to validate the project setup. Create a simple 'test' spider that scrapes a site like `toscrape.com` and prints the extracted items to confirm the basic configuration and item definitions are working correctly."
+            "details": "Modify the Selenium-based function to parse the Naver Map details panel for each discovered escape room cafe. The function should extract the cafe's name, full address, and the URL to its official website. This data will be the foundation for subsequent steps.",
+            "testStrategy": "Run the script targeting a specific, limited geographical area (e.g., 'Hongdae'). Manually cross-reference the output for 10-15 cafes with Naver Maps to ensure the extracted addresses and website URLs are accurate."
           },
           {
             "id": 2,
-            "title": "Implement Spider for Cafe Data from Map Portals",
-            "description": "Develop a spider to scrape cafe information from a dynamic map portal like Naver Maps. This spider needs to handle JavaScript rendering and user interactions to search for and extract a list of escape room cafes, including their name, address, and coordinates.",
-            "dependencies": [],
-            "details": "Integrate `scrapy-playwright` or `pyppeteer` to handle the dynamic nature of the map portal. The spider should programmatically navigate to the map, enter '방탈출' (escape room) into the search bar for a target region (e.g., '서울'). It must then wait for the search results to load, parse the HTML to extract cafe names, addresses, and links to their official websites. Geocode addresses to get latitude/longitude if not directly available. The extracted data should be yielded as `CafeItem` objects.",
-            "status": "pending",
-            "testStrategy": "Run the spider targeting a specific, limited geographical area. Verify the output (e.g., a JSON file via `scrapy crawl cafe_spider -o cafes.json`) contains the expected list of cafes. Manually cross-reference 5-10 entries with the map portal to ensure data accuracy."
+            "title": "Implement PostgreSQL Pipeline for Cafe Data",
+            "description": "Develop a data pipeline to process, clean, and store the scraped cafe information into the PostgreSQL database, including deduplication logic.",
+            "status": "done",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a function or class that takes the list of scraped cafes. This pipeline will connect to the PostgreSQL database, clean the data (e.g., standardize address formats), and check for existing entries (based on name and address) to prevent duplicates before inserting new records into the `cafes` table.",
+            "testStrategy": "Provide a test list of cafe data, including several duplicates and entries with extra whitespace, to the pipeline. Use a database client to verify that only unique, cleaned records are inserted into the `cafes` table."
           },
           {
             "id": 3,
-            "title": "Implement Spider for Theme Details from Official Websites",
-            "description": "Create a versatile spider that takes a cafe's official website URL (scraped in the previous task) as input and extracts detailed information for all themes offered by that cafe. This includes theme name, genre, difficulty, story, and other relevant attributes.",
-            "dependencies": [],
-            "details": "This spider will be triggered with a list of start URLs from the previously scraped cafe data. Since each cafe website has a unique structure, the spider should contain logic to identify common patterns for theme pages (e.g., links containing 'theme', 'game', 'reservation'). For each theme found, parse the page to extract details into a `ThemeItem`. The `ThemeItem` must include a reference (e.g., cafe name or ID) to link it back to its parent cafe.",
-            "status": "pending",
-            "testStrategy": "Test the spider against 3-5 different official cafe websites with varying layouts. Verify that it correctly extracts all theme information from each site. Check that it gracefully handles cases where a theme page is not found or some details are missing."
+            "title": "Develop Theme Scraper for Official Websites",
+            "description": "Create a new function to scrape theme details (name, genre, difficulty) from the official cafe websites collected in the first step.",
+            "status": "done",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement a new Selenium-based function, e.g., `scrape_theme_details(url)`, that navigates to a cafe's website. It should locate the 'themes' or 'games' section and parse the page to extract details for each theme. The implementation should be flexible enough to handle variations in website layouts.",
+            "testStrategy": "Test the function against 3-5 different official cafe websites with varying structures. Verify that it correctly extracts all available theme information and handles cases where a theme page or specific details are missing without errors."
           },
           {
             "id": 4,
-            "title": "Develop Data Processing and PostgreSQL Storage Pipeline",
-            "description": "Implement a Scrapy Item Pipeline to process, clean, and store the scraped `CafeItem` and `ThemeItem` objects into the PostgreSQL database. This includes data validation, cleaning, deduplication, and database insertion logic.",
-            "dependencies": [],
-            "details": "Create a custom pipeline class in `pipelines.py`. In the `process_item` method, check the item type. For each item, clean the data (e.g., trim whitespace, standardize address formats). Before inserting, query the database to check if the record already exists (e.g., a cafe with the same name and address) to prevent duplicates. Use `SQLAlchemy` Core or ORM to connect to the PostgreSQL database and perform `INSERT` or `UPDATE` operations on the `cafes` and `themes` tables.",
-            "status": "pending",
-            "testStrategy": "Enable the pipeline in `settings.py`. Run the full scraping process on a small scale. Connect to the PostgreSQL database using a tool like `psql` or DBeaver and verify that the `cafes` and `themes` tables are populated correctly. Run the scraper a second time to ensure the deduplication logic works and no new rows are added."
+            "title": "Integrate Theme Data into PostgreSQL Pipeline",
+            "description": "Extend the data pipeline to handle and store scraped theme information, linking it to the corresponding cafes in the database.",
+            "status": "done",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Modify the main script to orchestrate the process. After a cafe is processed by the pipeline (inserted or found), its database ID should be retrieved. The theme scraper will then be called with the cafe's website URL, and the resulting theme data will be inserted into the `themes` table with the correct `cafe_id` as a foreign key.",
+            "testStrategy": "Run the end-to-end scraping and storage process for a single cafe that has multiple themes. Connect to the database and verify that the cafe exists in the `cafes` table and that all its themes are correctly listed in the `themes` table with the proper `cafe_id`."
           },
           {
             "id": 5,
-            "title": "Implement Scheduler and Robust Error Handling",
-            "description": "Automate the scraping process to run on a weekly schedule and enhance the spiders with robust error handling mechanisms, such as proxy rotation and graceful failure on parsing errors.",
-            "dependencies": [],
-            "details": "Create a standalone Python script (`scheduler.py`) that uses the `APScheduler` library. Configure it to add a job that executes the `scrapy crawl` command on a weekly schedule. For error handling, implement a Scrapy Downloader Middleware to manage a pool of proxies and rotate them on failed requests or IP blocks. Within the spiders' parsing methods, wrap the data extraction logic in `try-except` blocks to catch `AttributeError` or `SelectorError`, logging the issue and the URL without crashing the entire crawl.",
-            "status": "pending",
-            "testStrategy": "For the scheduler, configure it to run every minute for testing and verify that the scraping process is triggered automatically. For error handling, test the proxy rotation by providing a list with some invalid proxies. Test the parsing error handling by manually pointing the spider to a URL with a different structure and confirming that an error is logged and the crawl continues."
+            "title": "Automate Scraping with a Weekly Scheduler",
+            "description": "Use `APScheduler` in `scheduler.py` to automate the execution of the entire scraping and storage process on a weekly basis.",
+            "status": "done",
+            "dependencies": [
+              4
+            ],
+            "details": "Create a `scheduler.py` script that imports and configures `APScheduler`. Define a job that calls the main function of the scraping script. Schedule this job to run weekly. Implement logging to record the start time, end time, and success or failure of each scheduled run.",
+            "testStrategy": "For testing, configure the scheduler to run every 5 minutes. Activate the scheduler and monitor the logs and database to confirm that the entire scraping and storage process is triggered automatically and completes as expected."
           }
         ]
       },
@@ -128,7 +137,7 @@
           11,
           12
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": []
       },
       {
@@ -227,7 +236,7 @@
     ],
     "metadata": {
       "created": "2025-07-18T10:34:46.302Z",
-      "updated": "2025-07-18T17:31:21.112Z",
+      "updated": "2025-07-19T09:46:26.980Z",
       "description": "Tasks for master context"
     }
   }

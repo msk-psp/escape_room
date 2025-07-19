@@ -7,6 +7,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from .pipeline import process_and_store_cafes, process_and_store_themes
 
 
 def scrape_naver_map_cafes(url: str):
@@ -81,22 +82,63 @@ def scrape_naver_map_cafes(url: str):
 
             # --- Data Extraction Logic ---
             print("Extracting data...")
-            # The name is usually inside a child span of the list item
-            cafe_name_selector = 'span:first-child' 
             
             cafes = []
             list_items = driver.find_elements(By.CSS_SELECTOR, list_item_selector)
             print(f"Found {len(list_items)} cafe items.")
 
-            for item in list_items:
+            for i in range(len(list_items)):
+                # Re-find the list items in each iteration to avoid StaleElementReferenceException
+                current_items = driver.find_elements(By.CSS_SELECTOR, list_item_selector)
+                if i >= len(current_items):
+                    print(f"Index {i} is out of bounds for current_items list.")
+                    continue
+                
+                item = current_items[i]
+
                 try:
-                    # Find the name element within the list item
-                    name_element = item.find_element(By.CSS_SELECTOR, cafe_name_selector)
-                    name = name_element.text
-                    if name: # Ensure the name is not empty
-                        cafes.append({{'name': name.strip()}})
+                    # --- Click the item to show details ---
+                    # Scroll the item into view before clicking
+                    driver.execute_script("arguments[0].scrollIntoView(true);", item)
+                    time.sleep(0.5) # Wait a bit after scrolling
+                    item.click()
+                    print(f"Clicked item {i+1}/{len(list_items)}")
+                    time.sleep(random.uniform(1, 2)) # Wait for details to load
+
+                    # --- Switch back to the main content to get details ---
+                    driver.switch_to.default_content()
+
+                    # --- Extract Name, Address, and Website ---
+                    name_selector = '._3XamX' # Selector for the main title in the detail panel
+                    address_selector = '._2yqUQ' # Selector for the address
+                    website_selector = '._1P6s2' # Selector for the website link
+
+                    try:
+                        name = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, name_selector))).text
+                        address = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, address_selector))).text
+                        
+                        website_element = driver.find_elements(By.CSS_SELECTOR, website_selector)
+                        website = website_element[0].text if website_element else None
+
+                        cafe_data = {
+                            'name': name.strip(),
+                            'address': address.strip(),
+                            'website': website
+                        }
+                        cafes.append(cafe_data)
+                        print(f"Extracted: {cafe_data}")
+
+                    except Exception as detail_e:
+                        print(f"Error extracting details for one cafe: {detail_e}")
+                    
+                    # --- Switch back to the search iframe to continue ---
+                    driver.switch_to.frame("searchIframe")
+
                 except Exception as e:
-                    print(f"Error extracting details for one cafe: {e}")
+                    print(f"Error processing item {i+1}: {e}")
+                    # If something goes wrong, switch back to the iframe to be safe
+                    driver.switch_to.default_content()
+                    driver.switch_to.frame("searchIframe")
 
             return cafes
 
@@ -109,12 +151,109 @@ def scrape_naver_map_cafes(url: str):
             print("Browser will be closed by context manager.")
 
 
-# To allow direct testing of this script
-if __name__ == '__main__':
+def scrape_theme_details(url: str):
+    """
+    Scrapes a cafe's official website for theme details.
+    This is a generic implementation and may need to be adapted for specific sites.
+    """
+    if not url or not url.startswith('http'):
+        print(f"Invalid URL for theme scraping: {url}")
+        return []
+
+    print(f"Navigating to theme website: {url}")
+    options = uc.ChromeOptions()
+    options.add_argument('--headless=new')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+
+    themes = []
+    try:
+        with uc.Chrome(driver_executable_path=ChromeDriverManager().install(), options=options) as driver:
+            driver.get(url)
+            time.sleep(2) # Allow page to load
+
+            # --- Generic Theme Finding Logic ---
+            # 1. Look for links with common keywords
+            theme_links = []
+            keywords = ['theme', 'game', 'reservation', '테마', '게임', '예약']
+            for keyword in keywords:
+                try:
+                    links = driver.find_elements(By.PARTIAL_LINK_TEXT, keyword)
+                    theme_links.extend([link.get_attribute('href') for link in links])
+                except Exception:
+                    pass # Ignore if no links are found
+
+            # If we found specific links, navigate to the first one
+            if theme_links:
+                # Filter out invalid or non-http links
+                valid_links = [link for link in theme_links if link and link.startswith('http')]
+                if valid_links:
+                    print(f"Found potential theme page: {valid_links[0]}")
+                    driver.get(valid_links[0])
+                    time.sleep(2)
+
+            # 2. Look for repeating elements that could be themes
+            # This is a heuristic. We'll look for common class names or tags.
+            # Common patterns: 'li', 'div.theme-item', 'div.game-card'
+            potential_theme_elements = driver.find_elements(By.CSS_SELECTOR, 'li > a') # A common pattern
+            if not potential_theme_elements:
+                 potential_theme_elements = driver.find_elements(By.CSS_SELECTOR, 'div[class*="theme"], div[class*="game"]')
+
+            print(f"Found {len(potential_theme_elements)} potential theme elements.")
+
+            for elem in potential_theme_elements:
+                try:
+                    # Try to extract a title and a description/genre
+                    title_elem = elem.find_elements(By.CSS_SELECTOR, 'h1, h2, h3, strong, b')
+                    title = title_elem[0].text if title_elem else None
+
+                    p_elem = elem.find_elements(By.CSS_SELECTOR, 'p, span')
+                    description = p_elem[0].text if p_elem else None
+
+                    if title and title.strip():
+                        themes.append({
+                            'name': title.strip(),
+                            'genre': description.strip() if description else None,
+                            'difficulty': None, # Placeholder
+                            'story': None # Placeholder
+                        })
+                except Exception:
+                    continue # Move to the next element if parsing fails
+
+    except Exception as e:
+        print(f"Could not scrape theme details from {url}. Error: {e}")
+
+    # Deduplicate results
+    unique_themes = [dict(t) for t in {tuple(d.items()) for d in themes}]
+    return unique_themes
+
+
+def main_scraping_process():
+    # 1. Scrape cafes from Naver Map
     query = "서울 방탈출카페"
     encoded_query = urllib.parse.quote(query)
     test_url = f"https://map.naver.com/v5/search/{encoded_query}"
     results = scrape_naver_map_cafes(test_url)
-    print(f"Found {len(results)} cafes in total.")
+
+    # 2. Process and store cafes, and get their DB IDs
     if results:
-        print(results)
+        print(f"Found {len(results)} cafes in total.")
+        processed_cafes = process_and_store_cafes(results)
+
+        # 3. For each processed cafe, scrape and store its themes
+        if processed_cafes:
+            print("\n--- Starting Theme Scraping ---")
+            for cafe in processed_cafes:
+                if cafe.get('website'):
+                    themes = scrape_theme_details(cafe['website'])
+                    if themes:
+                        print(f"Found {len(themes)} themes for {cafe['name']}.")
+                        process_and_store_themes(themes, cafe['id'])
+                    else:
+                        print(f"No themes found for {cafe['name']}.")
+                else:
+                    print(f"No website for {cafe['name']}, skipping theme scrape.")
+
+# To allow direct testing of this script
+if __name__ == '__main__':
+    main_scraping_process()
