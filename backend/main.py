@@ -2,9 +2,10 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from app.scheduler import scheduled_scrape_job
-from app import db, models
-from app.routers import scraping
+from app.scheduler import scheduled_job
+import app.db as db
+import app.models as models
+from app.routers import scraping, cafes, themes
 
 models.Base.metadata.create_all(bind=db.engine)
 
@@ -16,7 +17,7 @@ scheduler = AsyncIOScheduler()
 @app.on_event("startup")
 async def startup_event():
     # Run the job immediately on startup, and then every 24 hours.
-    scheduler.add_job(scheduled_scrape_job, 'interval', hours=24, id="scrape_job")
+    scheduler.add_job(scheduled_job, 'interval', hours=24, id="scrape_job")
     # For testing, you might want to run it more frequently, e.g., every minute:
     # scheduler.add_job(scheduled_scrape_job, 'interval', minutes=1, id="scrape_job")
     scheduler.start()

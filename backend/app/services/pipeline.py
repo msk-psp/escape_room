@@ -1,5 +1,5 @@
 import psycopg2
-from ..db import get_db_connection
+from app.db import get_db
 import datetime
 
 def process_and_store_cafes(cafes: list[dict]):
@@ -13,7 +13,7 @@ def process_and_store_cafes(cafes: list[dict]):
         print("No cafes to process.")
         return []
 
-    conn = get_db_connection()
+    conn = get_db()
     if not conn:
         print("Could not connect to the database.")
         return []
@@ -76,7 +76,7 @@ def process_and_store_themes(themes: list[dict], cafe_id: int):
     if not themes:
         return
 
-    conn = get_db_connection()
+    conn = get_db()
     if not conn:
         print("Could not connect to the database.")
         return
@@ -118,7 +118,7 @@ def process_and_store_reviews(reviews: list[dict], cafe_id: int):
     if not reviews:
         return
 
-    conn = get_db_connection()
+    conn = get_db()
     if not conn:
         print("Could not connect to the database.")
         return
