@@ -1,0 +1,234 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 11,
+        "title": "Project Initialization and Database Schema Setup",
+        "description": "Establish the foundational database schema in PostgreSQL and set up the initial project structures for both the Python FastAPI backend and the React (with Bun) frontend.",
+        "details": "Database: Use PostgreSQL. Create `cafes`, `themes`, `reviews`, and `users` tables as specified in the PRD. The `cafes` table should include `latitude` and `longitude` columns for PostGIS. Backend: Set up a new FastAPI project, configure database connection using SQLAlchemy or a similar ORM, and create initial directories for routers, models, and services. Frontend: Initialize a new React project using Bun, setting up a basic component structure (e.g., `components`, `pages`, `services`).",
+        "testStrategy": "Verify that the database schema is created correctly in PostgreSQL. Confirm that both FastAPI and React projects run successfully with their default boilerplate. Write initial model validation tests for the database schema.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup PostgreSQL Database and Define Schema with PostGIS",
+            "description": "Provision a PostgreSQL database instance and create the initial schema. This includes enabling the PostGIS extension and defining the `users`, `cafes`, `themes`, and `reviews` tables with their respective columns and relationships.",
+            "dependencies": [],
+            "details": "Write a `schema.sql` file or use a database migration tool like Alembic to define the table structures. Ensure the PostGIS extension is enabled using `CREATE EXTENSION postgis;`. The `cafes` table must include `latitude` and `longitude` columns, preferably using a PostGIS `GEOGRAPHY(Point, 4326)` type for geospatial queries. Define primary keys, foreign keys, and appropriate data types for all columns as specified in the PRD.",
+            "status": "done",
+            "testStrategy": "Connect to the database using a client like `psql` or DBeaver and verify that all tables, columns, and constraints exist as defined. Confirm the PostGIS extension is enabled by running `SELECT postgis_version();`."
+          },
+          {
+            "id": 2,
+            "title": "Initialize FastAPI Backend Project and Directory Structure",
+            "description": "Create a new Python project for the backend using FastAPI. Set up the basic directory structure to organize the application logically for routers, models, services, and configuration.",
+            "dependencies": [],
+            "details": "Use a dependency manager like Poetry or a `requirements.txt` file to manage Python packages. Install `fastapi`, `uvicorn`, `sqlalchemy`, and `psycopg2-binary`. Create a main application file (`main.py`) and establish a directory structure: `/app`, `/app/api` (for routers), `/app/models`, `/app/services`, `/app/core` (for configuration). Implement a root health check endpoint (`/`) that returns a simple JSON response to confirm the server is running.",
+            "status": "done",
+            "testStrategy": "Run the application using `uvicorn main:app --reload`. Access `http://127.0.0.1:8000` in a browser or with `curl` to ensure the health check endpoint returns a successful response. Check that the auto-generated OpenAPI docs are available at `/docs`."
+          },
+          {
+            "id": 3,
+            "title": "Implement SQLAlchemy Models and Configure Database Connection",
+            "description": "Create the SQLAlchemy ORM models corresponding to the PostgreSQL schema and configure the FastAPI application to connect to the database using environment variables.",
+            "dependencies": [],
+            "details": "In the `/app/models` directory, create Python classes for `User`, `Cafe`, `Theme`, and `Review` that inherit from SQLAlchemy's declarative base. Map these classes to the database tables created in subtask 12. In `/app/core/config.py`, manage the database connection URL using Pydantic's `BaseSettings` to load from environment variables. Create a reusable database session dependency (`get_db`) to be injected into API routes.",
+            "status": "done",
+            "testStrategy": "Create a temporary test script or an internal API endpoint that uses the `get_db` dependency to establish a session and perform a simple query (e.g., `SELECT 1` or count rows in a table). This will verify that the database connection string, credentials, and ORM models are configured correctly."
+          },
+          {
+            "id": 4,
+            "title": "Initialize React Frontend Project with Bun and Basic Structure",
+            "description": "Use the Bun toolkit to scaffold a new React application. Set up the initial folder structure for components, pages, and services, and configure basic routing.",
+            "dependencies": [],
+            "details": "Run `bun create react ./frontend` to initialize the project. Inside the `src` directory, create a standard folder structure: `src/components` (for reusable UI elements), `src/pages` (for top-level route components), `src/services` (for API call logic), and `src/assets`. Install `react-router-dom` and set up a basic router with at least two placeholder pages (e.g., `HomePage`, `MapPage`) to ensure navigation works.",
+            "status": "done",
+            "testStrategy": "Run `bun dev` in the frontend directory. Verify that the default React application loads correctly in the browser. Navigate between the created placeholder pages to confirm that `react-router-dom` is configured and working as expected."
+          },
+          {
+            "id": 5,
+            "title": "Containerize Services with Docker for Development",
+            "description": "Create Dockerfiles for the FastAPI backend and a `docker-compose.yml` file to orchestrate the backend, frontend dev server, and PostgreSQL database services for a consistent development environment.",
+            "dependencies": [],
+            "details": "Create a `Dockerfile` in the backend's root directory to containerize the FastAPI application. In the project root, create a `docker-compose.yml` file. Define three services: `db` (using the `postgis/postgis` image and a volume for data persistence), `backend` (building from its Dockerfile), and `frontend` (using an `oven/bun` image to run the `bun dev` command). Use volumes for both backend and frontend to enable hot-reloading on code changes. Configure environment variables for inter-service communication (e.g., the backend's database URL).",
+            "status": "done",
+            "testStrategy": "Run `docker-compose up --build` from the project root. Verify that all three containers start without errors by checking the logs with `docker-compose logs`. Confirm the backend can connect to the database container and that the frontend is accessible in the browser. Make a small code change in a backend file and a frontend file to ensure hot-reloading is functional for both services."
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Data Scraping Engine for Cafe and Theme Information",
+        "description": "Develop a data scraping system to periodically collect escape room cafe and theme information from sources like Naver/Kakao Maps and official cafe websites.",
+        "details": "Use Python with Scrapy or BeautifulSoup for static sites and Puppeteer (via a Node.js script or Python's `pyppeteer`) for dynamic, JavaScript-heavy sites. The scraper should extract cafe details (name, address, coordinates) and theme details (name, genre, difficulty, story). Implement a scheduler (e.g., cron job or a library like APScheduler) to run the scraping task weekly. Include error handling for website structure changes and IP blocks (e.g., using proxy rotation). The collected data should be cleaned, deduplicated, and stored in the PostgreSQL database.",
+        "testStrategy": "Run the scraper against target websites and verify that the data is correctly parsed and inserted into the database tables. Test the error handling by simulating network errors or pointing to an invalid URL. Validate the data cleaning and deduplication logic.",
+        "priority": "high",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup Scrapy Project and Core Configuration",
+            "description": "Initialize a new Python Scrapy project to serve as the foundation for the scraping engine. This includes setting up the project structure and configuring essential settings for polite and effective scraping, such as user agents and download delays.",
+            "dependencies": [],
+            "details": "Use the command `scrapy startproject scraper_engine` to create the project. In the `settings.py` file, configure a list of rotating `USER_AGENT` strings to mimic different browsers. Set `ROBOTSTXT_OBEY = False` as many modern sites have restrictive robots.txt files. Configure a `DOWNLOAD_DELAY` of 2-3 seconds to avoid overwhelming servers. Define the `Item` structures for `CafeItem` and `ThemeItem` in `items.py` to match the database schema.",
+            "status": "pending",
+            "testStrategy": "Run `scrapy check` to validate the project setup. Create a simple 'test' spider that scrapes a site like `toscrape.com` and prints the extracted items to confirm the basic configuration and item definitions are working correctly."
+          },
+          {
+            "id": 2,
+            "title": "Implement Spider for Cafe Data from Map Portals",
+            "description": "Develop a spider to scrape cafe information from a dynamic map portal like Naver Maps. This spider needs to handle JavaScript rendering and user interactions to search for and extract a list of escape room cafes, including their name, address, and coordinates.",
+            "dependencies": [],
+            "details": "Integrate `scrapy-playwright` or `pyppeteer` to handle the dynamic nature of the map portal. The spider should programmatically navigate to the map, enter '방탈출' (escape room) into the search bar for a target region (e.g., '서울'). It must then wait for the search results to load, parse the HTML to extract cafe names, addresses, and links to their official websites. Geocode addresses to get latitude/longitude if not directly available. The extracted data should be yielded as `CafeItem` objects.",
+            "status": "pending",
+            "testStrategy": "Run the spider targeting a specific, limited geographical area. Verify the output (e.g., a JSON file via `scrapy crawl cafe_spider -o cafes.json`) contains the expected list of cafes. Manually cross-reference 5-10 entries with the map portal to ensure data accuracy."
+          },
+          {
+            "id": 3,
+            "title": "Implement Spider for Theme Details from Official Websites",
+            "description": "Create a versatile spider that takes a cafe's official website URL (scraped in the previous task) as input and extracts detailed information for all themes offered by that cafe. This includes theme name, genre, difficulty, story, and other relevant attributes.",
+            "dependencies": [],
+            "details": "This spider will be triggered with a list of start URLs from the previously scraped cafe data. Since each cafe website has a unique structure, the spider should contain logic to identify common patterns for theme pages (e.g., links containing 'theme', 'game', 'reservation'). For each theme found, parse the page to extract details into a `ThemeItem`. The `ThemeItem` must include a reference (e.g., cafe name or ID) to link it back to its parent cafe.",
+            "status": "pending",
+            "testStrategy": "Test the spider against 3-5 different official cafe websites with varying layouts. Verify that it correctly extracts all theme information from each site. Check that it gracefully handles cases where a theme page is not found or some details are missing."
+          },
+          {
+            "id": 4,
+            "title": "Develop Data Processing and PostgreSQL Storage Pipeline",
+            "description": "Implement a Scrapy Item Pipeline to process, clean, and store the scraped `CafeItem` and `ThemeItem` objects into the PostgreSQL database. This includes data validation, cleaning, deduplication, and database insertion logic.",
+            "dependencies": [],
+            "details": "Create a custom pipeline class in `pipelines.py`. In the `process_item` method, check the item type. For each item, clean the data (e.g., trim whitespace, standardize address formats). Before inserting, query the database to check if the record already exists (e.g., a cafe with the same name and address) to prevent duplicates. Use `SQLAlchemy` Core or ORM to connect to the PostgreSQL database and perform `INSERT` or `UPDATE` operations on the `cafes` and `themes` tables.",
+            "status": "pending",
+            "testStrategy": "Enable the pipeline in `settings.py`. Run the full scraping process on a small scale. Connect to the PostgreSQL database using a tool like `psql` or DBeaver and verify that the `cafes` and `themes` tables are populated correctly. Run the scraper a second time to ensure the deduplication logic works and no new rows are added."
+          },
+          {
+            "id": 5,
+            "title": "Implement Scheduler and Robust Error Handling",
+            "description": "Automate the scraping process to run on a weekly schedule and enhance the spiders with robust error handling mechanisms, such as proxy rotation and graceful failure on parsing errors.",
+            "dependencies": [],
+            "details": "Create a standalone Python script (`scheduler.py`) that uses the `APScheduler` library. Configure it to add a job that executes the `scrapy crawl` command on a weekly schedule. For error handling, implement a Scrapy Downloader Middleware to manage a pool of proxies and rotate them on failed requests or IP blocks. Within the spiders' parsing methods, wrap the data extraction logic in `try-except` blocks to catch `AttributeError` or `SelectorError`, logging the issue and the URL without crashing the entire crawl.",
+            "status": "pending",
+            "testStrategy": "For the scheduler, configure it to run every minute for testing and verify that the scraping process is triggered automatically. For error handling, test the proxy rotation by providing a list with some invalid proxies. Test the parsing error handling by manually pointing the spider to a URL with a different structure and confirming that an error is logged and the crawl continues."
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Backend: Core API Endpoints for Cafes and Themes",
+        "description": "Develop the core RESTful API endpoints required to serve cafe and theme data to the frontend, including search and filtering capabilities.",
+        "details": "Using FastAPI, implement the following endpoints: `GET /cafes` with query parameters for filtering by region and name. `GET /cafes/{id}` to fetch details for a single cafe. `GET /themes` with query parameters for filtering by genre, difficulty, recommended players, and rating. `GET /themes/{id}` for specific theme details. `GET /themes/{id}/reviews` to list reviews for a theme. Implement efficient database queries to handle filtering and ensure response times are under 1 second.",
+        "testStrategy": "Use Swagger UI (auto-generated by FastAPI) or Postman to test each endpoint with various valid and invalid parameters. Write unit tests for the business logic of each endpoint and integration tests to verify the database interactions. Performance test the endpoints with a large dataset to ensure they meet the 1-second response time requirement.",
+        "priority": "high",
+        "dependencies": [
+          11,
+          12
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Frontend: Main Page UI and Content Sections",
+        "description": "Build the main page of the web application, featuring a central search bar, curated content sections, and quick navigation links.",
+        "details": "Using React, create a `MainPage` component. Implement a prominent `SearchBar` component. Create reusable `ContentSection` components for '인기 테마 TOP 10', '이번 주 신규 테마', and '지역별 추천 카페'. These sections will initially fetch data from the backend API. Add styled buttons or links for major regions like '홍대', '강남', '건대'. Ensure the page layout is responsive and adheres to a mobile-first design approach.",
+        "testStrategy": "Visually inspect the main page on various screen sizes (desktop, tablet, mobile) to ensure responsiveness. Use React Testing Library to test that all components render correctly. Verify that the content sections successfully fetch and display data from the backend APIs. Mock API calls in tests to isolate frontend component logic.",
+        "priority": "medium",
+        "dependencies": [
+          13
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Frontend: Search and Filtering Functionality",
+        "description": "Implement the search and filtering page, allowing users to find cafes and themes based on various criteria and view results in both list and map formats.",
+        "details": "Create a `SearchPage` component in React. Implement filter controls: multi-select dropdowns for region and genre, a slider/button group for difficulty and rating, and buttons for recommended players. Manage the state of these filters using React hooks (`useState`, `useEffect`). When filters are applied, make an API call to `GET /themes` or `GET /cafes` with the appropriate query parameters. Implement a toggle to switch between a `ListView` component and a `MapView` component to display the results.",
+        "testStrategy": "Test the filter controls individually and in combination to ensure the correct API requests are generated. Verify that the application state updates correctly as filters are changed. Use React Testing Library to simulate user interactions with the filter controls and assert that the correct data is fetched and displayed.",
+        "priority": "high",
+        "dependencies": [
+          13
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Frontend: Map View for Search Results",
+        "description": "Develop the map view for search results, displaying cafe locations as pins on a map and providing summary information.",
+        "details": "Integrate a mapping library like `react-kakao-maps-sdk` or a similar library for Naver Maps. The `MapView` component will receive the filtered list of cafes as a prop. For each cafe, render a pin on the map at its `latitude` and `longitude`. Implement an `onClick` event for each pin to show an infowindow containing the cafe's name and rating. The infowindow should have a link that navigates the user to the cafe's detail page.",
+        "testStrategy": "Verify that pins are correctly rendered on the map for a given set of search results. Test the click functionality on pins to ensure the infowindow appears with the correct information. Click the link in the infowindow and confirm it navigates to the correct detail page URL. Test with zero results to ensure the map displays gracefully.",
+        "priority": "medium",
+        "dependencies": [
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Frontend: Cafe and Theme Detail Pages",
+        "description": "Create the detailed information pages for both escape room cafes and individual themes, including all relevant information and user reviews.",
+        "details": "Create dynamic route pages in React, e.g., `/cafes/[id]` and `/themes/[id]`. The `CafeDetailPage` will fetch data from `GET /cafes/{id}` and display the cafe's address (with an embedded map), contact info, and a list of its themes. The `ThemeDetailPage` will fetch from `GET /themes/{id}` and display the poster, story, genre, difficulty, etc. It will also include a `ReviewList` component that fetches and displays reviews from `GET /themes/{id}/reviews`.",
+        "testStrategy": "Test that navigating to a specific cafe or theme URL fetches and displays the correct data. Verify all fields from the PRD are present on the page. Check that the embedded map on the cafe page shows the correct location. Ensure the review list populates correctly. Test with invalid IDs to confirm proper error handling (e.g., showing a 'Not Found' page).",
+        "priority": "medium",
+        "dependencies": [
+          13
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Full Stack: User Authentication and Review Submission",
+        "description": "Implement user authentication and the ability for logged-in users to post reviews on theme detail pages.",
+        "details": "Backend: Extend the `users` table schema. Implement user registration and login endpoints using JWT for authentication. Create the `POST /themes/{id}/reviews` endpoint, protecting it with an authentication middleware that requires a valid JWT. Frontend: Create login and registration pages/modals. Implement global state management (e.g., React Context or Zustand) to store user authentication status. On the `ThemeDetailPage`, show a 'Write a Review' form (with star rating and a comment box) only to logged-in users. On form submission, send an authenticated POST request to the backend.",
+        "testStrategy": "Backend: Test registration and login endpoints. Test that the review posting endpoint returns a 401/403 error without a valid token and a 201 success with a valid token. Frontend: Test the login/logout flow. Verify that the review form is only visible to authenticated users. Submit a review and confirm that it appears in the review list after a successful post.",
+        "priority": "medium",
+        "dependencies": [
+          17
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Admin Panel for Data Management",
+        "description": "Create a secure web-based admin panel for internal use to manage and manually correct the data collected by the scraper.",
+        "details": "Build a simple, separate frontend application (or a protected section of the main app) for the admin panel. It should provide CRUD (Create, Read, Update, Delete) interfaces for the `cafes` and `themes` tables. Implement secure login for administrators. This panel will allow staff to fix incorrect data, remove closed cafes, or manually add new themes that the scraper might have missed. The backend will need corresponding protected API endpoints (e.g., `PUT /cafes/{id}`, `DELETE /themes/{id}`) accessible only to admin users.",
+        "testStrategy": "Test that only users with admin privileges can access the admin panel and its API endpoints. Perform CRUD operations on cafes and themes and verify the changes are reflected in the main database and on the public-facing website. Test data validation on the admin forms.",
+        "priority": "low",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "CI/CD Pipeline and Production Deployment",
+        "description": "Configure and automate the deployment process for the frontend, backend, and database, and schedule the recurring data scraping job.",
+        "details": "Frontend: Set up a CI/CD pipeline to deploy the React application to Vercel on every push to the main branch. Backend: Containerize the FastAPI application using Docker. Deploy the container to a cloud service like AWS ECS or Google Cloud Run. Database: Provision a managed PostgreSQL instance on AWS RDS or a similar service. Scraper: Configure the scraping script to run on a schedule using a service like AWS Lambda with EventBridge triggers or a cron job on a dedicated EC2 instance.",
+        "testStrategy": "Trigger a deployment and verify that the new version of the frontend and backend are live. Check that the application connects successfully to the production database. Manually trigger the scheduled scraping job and confirm it runs successfully in the production environment. Monitor service health and logs to ensure stability and meet the 99.5% uptime requirement.",
+        "priority": "medium",
+        "dependencies": [
+          14,
+          18,
+          19
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-18T10:34:46.302Z",
+      "updated": "2025-07-18T17:31:21.112Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

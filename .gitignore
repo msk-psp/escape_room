@@ -1,0 +1,48 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+
+# Dependency directories
+node_modules/
+/app/node_modules
+
+# Python
+/backend/__pycache__/
+/backend/.venv/
+/backend/db.sqlite3
+*.pyc
+
+# Frontend build output
+/app/build/
+/app/dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Editor directories and files
+.idea
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
+.DS_Store
+
+# Taskmaster
+.taskmaster/state.json
+.taskmaster/reports/
+
+# Task files (optional, uncomment if you don't want to track them)
+# .taskmaster/tasks/tasks.json
+# .taskmaster/tasks/
+
+.gemini
