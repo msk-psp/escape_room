@@ -1,15 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import SearchPage from './SearchPage';
+import MainPage from './MainPage';
 import "./index.css";
-
-function HomePage() {
-  return (
-    <div className="text-center">
-      <h1 className="text-5xl font-bold my-4 leading-tight">Welcome to Escape Everything</h1>
-      <p>Your one-stop shop for finding the best escape rooms.</p>
-    </div>
-  );
-}
 
 export function App() {
   return (
@@ -22,7 +14,7 @@ export function App() {
           </ul>
         </nav>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<MainPage />} />
           <Route path="/search" element={<SearchPage />} />
         </Routes>
       </div>
