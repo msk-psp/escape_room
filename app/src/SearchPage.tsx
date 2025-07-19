@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import ListView from './ListView';
-import MapView from './MapView';
 
 const SearchPage = () => {
-    const [view, setView] = useState('list'); // 'list' or 'map'
     const [region, setRegion] = useState('');
     const [genre, setGenre] = useState('');
     const [results, setResults] = useState([]);
-    const [searchType, setSearchType] = useState('cafes'); // 'cafes' or 'themes'
+    const [searchType, setSearchType] = useState('cafes');
+
+    // Hardcoded options for filters
+    const regionOptions = ['서울', '강남', '홍대', '건대'];
+    const genreOptions = ['공포', '추리', 'SF', '어드벤처'];
 
     useEffect(() => {
         const fetchResults = async () => {
@@ -44,42 +46,31 @@ const SearchPage = () => {
         <div>
             <h1 className="text-3xl font-bold mb-4">Search for Cafes and Themes</h1>
             
-            <div className="flex gap-4 mb-4 p-4 border rounded items-center">
+            <div className="flex flex-wrap gap-4 mb-4 p-4 border rounded items-center">
                 <select value={searchType} onChange={(e) => setSearchType(e.target.value)} className="p-2 border rounded">
                     <option value="cafes">Cafes</option>
                     <option value="themes">Themes</option>
                 </select>
 
                 {searchType === 'cafes' ? (
-                    <input 
-                        type="text" 
-                        placeholder="Region (e.g., '서울')" 
-                        value={region}
-                        onChange={(e) => setRegion(e.target.value)}
-                        className="p-2 border rounded"
-                    />
+                    <select value={region} onChange={(e) => setRegion(e.target.value)} className="p-2 border rounded">
+                        <option value="">All Regions</option>
+                        {regionOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
                 ) : (
-                    <input 
-                        type="text" 
-                        placeholder="Genre (e.g., '공포')" 
-                        value={genre}
-                        onChange={(e) => setGenre(e.target.value)}
-                        className="p-2 border rounded"
-                    />
+                    <select value={genre} onChange={(e) => setGenre(e.target.value)} className="p-2 border rounded">
+                        <option value="">All Genres</option>
+                        {genreOptions.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
                 )}
-            </div>
-
-            <div className="mb-4">
-                <button onClick={() => setView('list')} className={`p-2 ${view === 'list' ? 'bg-gray-300' : ''}`}>
-                    List View
-                </button>
-                <button onClick={() => setView('map')} className={`p-2 ${view === 'map' ? 'bg-gray-300' : ''}`}>
-                    Map View
-                </button>
+                {/* Placeholder for more filters */}
+                <div className="p-2 border rounded bg-gray-100 text-gray-500">Difficulty</div>
+                <div className="p-2 border rounded bg-gray-100 text-gray-500">Rating</div>
+                <div className="p-2 border rounded bg-gray-100 text-gray-500">Players</div>
             </div>
 
             <div>
-                {view === 'list' ? <ListView results={results} type={searchType} /> : <MapView results={results} />}
+                <ListView results={results} type={searchType} />
             </div>
         </div>
     );
