@@ -137,7 +137,7 @@
           11,
           12
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -236,7 +236,7 @@
     ],
     "metadata": {
       "created": "2025-07-18T10:34:46.302Z",
-      "updated": "2025-07-19T09:46:26.980Z",
+      "updated": "2025-07-19T09:55:02.426Z",
       "description": "Tasks for master context"
     }
   }

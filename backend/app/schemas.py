@@ -2,12 +2,17 @@ from pydantic import BaseModel
 from typing import List, Optional
 import datetime
 
+from pydantic import BaseModel
+from typing import List, Optional
+import datetime
+
 class Cafe(BaseModel):
     id: int
     name: str
     address: Optional[str]
     latitude: Optional[float]
     longitude: Optional[float]
+    open_date: Optional[datetime.date]
 
     class Config:
         orm_mode = True

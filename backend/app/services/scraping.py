@@ -7,8 +7,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from .pipeline import process_and_store_cafes, process_and_store_themes
-
+from .pipeline import process_and_store_cafes, process_and_store_themes, process_and_store_reviews
+import datetime
 
 def scrape_naver_map_cafes(url: str):
     """
@@ -227,6 +227,18 @@ def scrape_theme_details(url: str):
     unique_themes = [dict(t) for t in {tuple(d.items()) for d in themes}]
     return unique_themes
 
+def scrape_reviews(cafe_name: str):
+    """
+    Dummy function to simulate scraping reviews for a cafe.
+    In a real scenario, this would use Selenium to find and parse reviews.
+    """
+    print(f"Scraping reviews for {cafe_name}...")
+    # Simulate finding a few reviews with different dates
+    return [
+        {'rating': 5, 'comment': 'Great!', 'created_at': (datetime.datetime.now() - datetime.timedelta(days=30)).isoformat()},
+        {'rating': 4, 'comment': 'Good.', 'created_at': (datetime.datetime.now() - datetime.timedelta(days=100)).isoformat()},
+        {'rating': 3, 'comment': 'Okay.', 'created_at': (datetime.datetime.now() - datetime.timedelta(days=365)).isoformat()},
+    ]
 
 def main_scraping_process():
     # 1. Scrape cafes from Naver Map
@@ -240,10 +252,11 @@ def main_scraping_process():
         print(f"Found {len(results)} cafes in total.")
         processed_cafes = process_and_store_cafes(results)
 
-        # 3. For each processed cafe, scrape and store its themes
+        # 3. For each processed cafe, scrape and store its themes and reviews
         if processed_cafes:
-            print("\n--- Starting Theme Scraping ---")
+            print("\n--- Starting Theme and Review Scraping ---")
             for cafe in processed_cafes:
+                # Scrape and store themes
                 if cafe.get('website'):
                     themes = scrape_theme_details(cafe['website'])
                     if themes:
@@ -253,6 +266,15 @@ def main_scraping_process():
                         print(f"No themes found for {cafe['name']}.")
                 else:
                     print(f"No website for {cafe['name']}, skipping theme scrape.")
+
+                # Scrape and store reviews, which also updates open_date
+                reviews = scrape_reviews(cafe['name'])
+                if reviews:
+                    print(f"Found {len(reviews)} reviews for {cafe['name']}.")
+                    process_and_store_reviews(reviews, cafe['id'])
+                else:
+                    print(f"No reviews found for {cafe['name']}.")
+
 
 # To allow direct testing of this script
 if __name__ == '__main__':

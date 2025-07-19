@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Double, ForeignKey
+from sqlalchemy import Column, Integer, String, Double, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from geoalchemy2 import Geometry
@@ -14,6 +14,7 @@ class Cafe(Base):
     latitude = Column(Double)
     longitude = Column(Double)
     geom = Column(Geometry('POINT'))
+    open_date = Column(Date)
 
     reviews = relationship("Review", back_populates="cafe")
     themes = relationship("CafeTheme", back_populates="cafe")
